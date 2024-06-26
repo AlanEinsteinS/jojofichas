@@ -68,7 +68,8 @@ if "ficha" not in st.session_state:
             "velocidade": "E",
             "precisao": "E",
             "durabilidade": "E",
-            "potencial": "E"
+            "potencial": "E",
+            "alcance": "E"
         },
         "status": {
             "vida": 50,
@@ -88,8 +89,8 @@ st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session
 # Atributos com classificação de E a A
 st.header("Atributos")
 rank_choices = ["E", "D", "C", "B", "A", "S", "S+", "X"]
-cols = st.columns(5)
-for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencial"]):
+cols = st.columns(6)
+for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencial", "alcance"]):
     st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
 
 # Barras de Vida, Stamina, Impulso e Força de Vontade
