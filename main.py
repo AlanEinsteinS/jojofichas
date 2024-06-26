@@ -68,7 +68,7 @@ if "ficha" not in st.session_state:
             "velocidade": "E",
             "precisao": "E",
             "durabilidade": "E",
-            "potencia": "E"
+            "potencial": "E"
         },
         "status": {
             "vida": 50,
