@@ -1,13 +1,13 @@
 import streamlit as st
 import json
 
-# Function to save data to a JSON file
+# Função para salvar dados em um arquivo JSON
 def save_data(data, filename="rpg_data.json"):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
     st.success(f"Ficha salva com sucesso em {filename}!")
 
-# Function to load data from a JSON file
+# Função para carregar dados de um arquivo JSON
 def load_data(filename="rpg_data.json"):
     try:
         with open(filename, 'r') as f:
@@ -16,7 +16,7 @@ def load_data(filename="rpg_data.json"):
         st.warning("Nenhum arquivo de dados encontrado.")
         return None
 
-# Apply Montserrat font to the entire app
+# Aplicando a fonte Montserrat para todo o app
 st.markdown(
     """
     <style>
@@ -49,16 +49,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Title of the site
+# Título do aplicativo
 st.title('JoJo Fichas')
 st.markdown('<p style="text-align: center;"><a href="https://github.com/AlanEinsteinS" target="_blank" style="color: #FFFFFF; text-decoration: none;">Made by dark</a></p>', unsafe_allow_html=True)
 
-# Load data if a JSON file is uploaded
+# Carregar dados se um arquivo JSON for enviado
 uploaded_file = st.file_uploader("Carregar Ficha", type=["json"])
 if uploaded_file:
     st.session_state.ficha = json.load(uploaded_file)
 
-# Initialize data if not in session state
+# Inicializar dados se não estiverem no estado da sessão
 if "ficha" not in st.session_state:
     st.session_state.ficha = {
         "nome_usuario": "",
@@ -80,22 +80,22 @@ if "ficha" not in st.session_state:
         "habilidades": []
     }
 
-# User Information
+# Informações do usuário
 st.header("Informações do Usuário")
 st.session_state.ficha["nome_usuario"] = st.text_input("Nome do usuário", st.session_state.ficha["nome_usuario"])
 st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session_state.ficha["nome_stand"])
 
-# Attributes with rank from E to A
+# Atributos com classificação de E a A
 st.header("Atributos")
 rank_choices = ["E", "D", "C", "B", "A", "S", "S+", "X"]
 cols = st.columns(5)
 for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencial"]):
     st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
 
-# Health, Stamina, Impulse, and Willpower Bars
+# Barras de Vida, Stamina, Impulso e Força de Vontade
 st.header("Status")
 
-# Function to create colored sliders
+# Função para criar sliders coloridos
 def create_colored_slider(label, status_key, color, default_max=500):
     st.subheader(label)
     st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
@@ -111,22 +111,20 @@ def create_colored_slider(label, status_key, color, default_max=500):
     )
     st.session_state.ficha["status"][f"{status_key}_max"] = max_value  # Salvar o valor máximo no estado da sessão
 
-# Create colored sliders for each status
+# Criar sliders coloridos para cada status
 create_colored_slider("Vida", "vida", "#FF5733")
 create_colored_slider("Stamina", "stamina", "#33FF5E")
 create_colored_slider("Impulso", "impulso", "#337CFF")
 create_colored_slider("Força de Vontade", "forca_vontade", "#A933FF")
 
-# Inventory
+# Inventário
 st.header("Inventário")
 st.session_state.ficha["inventario"] = st.text_area("Inventário", st.session_state.ficha["inventario"])
 
-# Abilities
+# Habilidades
 st.header("Habilidades")
 
-if "new_habilidades" not in st.session_state:
-    st.session_state.new_habilidades = []
-
+# Função para adicionar habilidades
 def adicionar_habilidade():
     with st.form(key='habilidade_form', clear_on_submit=True):
         nome_habilidade = st.text_input("Nome da Habilidade")
@@ -142,22 +140,38 @@ def adicionar_habilidade():
             })
             st.success("Habilidade adicionada com sucesso!")
 
-# Button to add ability
+# Adicionar habilidade
 adicionar_habilidade()
 
-# Show added abilities
+# Mostrar habilidades adicionadas
 if st.session_state.ficha["habilidades"]:
     st.subheader("Lista de Habilidades")
     for idx, habilidade in enumerate(st.session_state.ficha["habilidades"]):
         with st.expander(f"Habilidade {idx+1}: {habilidade['nome']}"):
             st.write(f"*Descrição:* {habilidade['descricao']}")
             st.write(f"*Custo:* {habilidade['custo']}")
+            # Opções para editar ou excluir habilidade
+            edit_habilidade = st.checkbox(f"Editar Habilidade {idx+1}")
+            if edit_habilidade:
+                nome_habilidade_editar = st.text_input("Novo nome da habilidade", value=habilidade['nome'])
+                descricao_habilidade_editar = st.text_area("Nova descrição", value=habilidade['descricao'])
+                custo_habilidade_editar = st.number_input("Novo custo", value=habilidade['custo'])
+                if st.button("Salvar Edição"):
+                    habilidade['nome'] = nome_habilidade_editar
+                    habilidade['descricao'] = descricao_habilidade_editar
+                    habilidade['custo'] = custo_habilidade_editar
+                    st.success("Habilidade editada com sucesso!")
+            delete_habilidade = st.checkbox(f"Excluir Habilidade {idx+1}")
+            if delete_habilidade:
+                if st.button("Confirmar Exclusão"):
+                    st.session_state.ficha["habilidades"].pop(idx)
+                    st.success("Habilidade excluída com sucesso!")
 
-# Button to save the character sheet to a JSON file
+# Botão para salvar a ficha de personagem em um arquivo JSON
 if st.button("Salvar Ficha"):
     save_data(st.session_state.ficha)
 
-# Button to download the character sheet as a JSON file
+# Botão para baixar a ficha de personagem como um arquivo JSON
 ficha_json = json.dumps(st.session_state.ficha, indent=4)
 st.download_button(
     label="Baixar Ficha",
