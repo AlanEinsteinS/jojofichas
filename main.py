@@ -143,6 +143,11 @@ def adicionar_habilidade():
 # Adicionar habilidade
 adicionar_habilidade()
 
+# Função para excluir habilidades
+def excluir_habilidade(index):
+    st.session_state.ficha["habilidades"].pop(index)
+    st.success("Habilidade excluída com sucesso!")
+
 # Mostrar habilidades adicionadas
 if st.session_state.ficha["habilidades"]:
     st.subheader("Lista de Habilidades")
@@ -164,8 +169,7 @@ if st.session_state.ficha["habilidades"]:
             delete_habilidade = st.checkbox(f"Excluir Habilidade {idx+1}")
             if delete_habilidade:
                 if st.button("Confirmar Exclusão"):
-                    st.session_state.ficha["habilidades"].pop(idx)
-                    st.success("Habilidade excluída com sucesso!")
+                    excluir_habilidade(idx)  # Chama a função para excluir a habilidade pelo índice atual
 
 # Botão para salvar a ficha de personagem em um arquivo JSON
 if st.button("Salvar Ficha"):

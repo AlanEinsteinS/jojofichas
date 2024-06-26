@@ -6,18 +6,39 @@
         "velocidade": "E",
         "precisao": "E",
         "durabilidade": "E",
-        "potencia": "E"
+        "potencial": "E"
     },
     "status": {
-        "vida": 45,
+        "vida": 50,
         "stamina": 50,
         "impulso": 50,
         "forca_vontade": 50,
-        "vida_max": 100,
+        "vida_max": 500,
         "stamina_max": 500,
         "impulso_max": 500,
         "forca_vontade_max": 500
     },
     "inventario": "",
-    "habilidades": []
+    "habilidades": [
+        {
+            "nome": "aa",
+            "descricao": "aaa",
+            "custo": 5
+        },
+        {
+            "nome": "asasas",
+            "descricao": "asasas",
+            "custo": 4
+        },
+        {
+            "nome": "asasas",
+            "descricao": "asasa",
+            "custo": 4
+        },
+        {
+            "nome": "asasas",
+            "descricao": "asasas",
+            "custo": 2
+        }
+    ]
 }
