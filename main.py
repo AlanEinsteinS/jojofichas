@@ -4,7 +4,7 @@ import json
 # Function to save data to a JSON file
 def save_data(data, filename="rpg_data.json"):
     with open(filename, 'w') as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
     st.success(f"Ficha salva com sucesso em {filename}!")
 
 # Function to load data from a JSON file
@@ -96,23 +96,26 @@ for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade",
 st.header("Status")
 
 # Function to create colored sliders
-def create_colored_slider(label, status_key, color):
+def create_colored_slider(label, status_key, color, default_max=500):
     st.subheader(label)
     st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
+    max_value = st.session_state.ficha["status"].get(f"{status_key}_max", default_max)
+    max_value = st.number_input(f'Máximo para {label.lower()}', min_value=1, value=max_value)
     st.session_state.ficha["status"][status_key] = st.slider(
         label,
-        0, 500,
+        0, max_value,
         st.session_state.ficha["status"][status_key],
         key=status_key,
         help=f"Nível de {label.lower()} do personagem",
         step=1,
     )
+    st.session_state.ficha["status"][f"{status_key}_max"] = max_value  # Salvar o valor máximo no estado da sessão
 
 # Create colored sliders for each status
-create_colored_slider("Vida", "vida", "#FF5733")  # Red
-create_colored_slider("Stamina", "stamina", "#33FF5E")  # Green
-create_colored_slider("Impulso", "impulso", "#337CFF")  # Blue
-create_colored_slider("Força de Vontade", "forca_vontade", "#A933FF")  # Purple
+create_colored_slider("Vida", "vida", "#FF5733")
+create_colored_slider("Stamina", "stamina", "#33FF5E")
+create_colored_slider("Impulso", "impulso", "#337CFF")
+create_colored_slider("Força de Vontade", "forca_vontade", "#A933FF")
 
 # Inventory
 st.header("Inventário")
@@ -155,7 +158,7 @@ if st.button("Salvar Ficha"):
     save_data(st.session_state.ficha)
 
 # Button to download the character sheet as a JSON file
-ficha_json = json.dumps(st.session_state.ficha)
+ficha_json = json.dumps(st.session_state.ficha, indent=4)
 st.download_button(
     label="Baixar Ficha",
     data=ficha_json,

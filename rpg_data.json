@@ -1,1 +1,23 @@
-{"nome_usuario": "", "nome_stand": "", "atributos": {"forca": "E", "velocidade": "E", "precisao": "E", "durabilidade": "E", "potencia": "E"}, "status": {"vida": 30, "stamina": 16, "impulso": 28, "forca_vontade": 50}, "inventario": "", "habilidades": [{"nome": "xx", "descricao": "xxx", "custo": 2}]}
+{
+    "nome_usuario": "",
+    "nome_stand": "",
+    "atributos": {
+        "forca": "E",
+        "velocidade": "E",
+        "precisao": "E",
+        "durabilidade": "E",
+        "potencia": "E"
+    },
+    "status": {
+        "vida": 45,
+        "stamina": 50,
+        "impulso": 50,
+        "forca_vontade": 50,
+        "vida_max": 100,
+        "stamina_max": 500,
+        "impulso_max": 500,
+        "forca_vontade_max": 500
+    },
+    "inventario": "",
+    "habilidades": []
+}
