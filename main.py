@@ -1,22 +1,13 @@
 import streamlit as st
-import plotly.graph_objects as go  # Corrigir a importação do Plotly
 import json
 
-def create_progress_bar(value, max_value, color):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        gauge={'axis': {'range': [0, max_value]},
-               'bar': {'color': color}},
-    ))
-    fig.update_layout(height=150, margin={'t': 0, 'b': 0, 'l': 0, 'r': 0})
-    st.plotly_chart(fig, use_container_width=True)
-
+# Function to save data to a JSON file
 def save_data(data, filename="rpg_data.json"):
     with open(filename, 'w') as f:
         json.dump(data, f)
     st.success(f"Ficha salva com sucesso em {filename}!")
 
+# Function to load data from a JSON file
 def load_data(filename="rpg_data.json"):
     try:
         with open(filename, 'r') as f:
@@ -25,11 +16,14 @@ def load_data(filename="rpg_data.json"):
         st.warning("Nenhum arquivo de dados encontrado.")
         return None
 
-# Aplicar estilos CSS para um tema escuro
+# Apply Montserrat font to the entire app
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
     body {
+        font-family: 'Montserrat', sans-serif;
         color: #d4d4d4;
         background-color: #1e1e1e;
     }
@@ -45,21 +39,26 @@ st.markdown(
     .st-ez {
         background-color: #252525;
     }
+
+    /* Increase font size for sliders */
+    .stSlider .streamlit-slider .slider-value span {
+        font-size: 18px !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Título do site
+# Title of the site
 st.title('JoJo Fichas')
 st.markdown('<p style="text-align: center;"><a href="https://github.com/AlanEinsteinS" target="_blank" style="color: #FFFFFF; text-decoration: none;">Made by dark</a></p>', unsafe_allow_html=True)
-# Carregar dados se o arquivo for enviado
 
+# Load data if a JSON file is uploaded
 uploaded_file = st.file_uploader("Carregar Ficha", type=["json"])
 if uploaded_file:
     st.session_state.ficha = json.load(uploaded_file)
 
-# Inicializar dados se não estiverem no estado da sessão
+# Initialize data if not in session state
 if "ficha" not in st.session_state:
     st.session_state.ficha = {
         "nome_usuario": "",
@@ -81,36 +80,45 @@ if "ficha" not in st.session_state:
         "habilidades": []
     }
 
-# Informações do Usuário
+# User Information
 st.header("Informações do Usuário")
 st.session_state.ficha["nome_usuario"] = st.text_input("Nome do usuário", st.session_state.ficha["nome_usuario"])
 st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session_state.ficha["nome_stand"])
 
-# Atributos com rank de E a A
+# Attributes with rank from E to A
 st.header("Atributos")
 rank_choices = ["E", "D", "C", "B", "A"]
 cols = st.columns(5)
 for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencia"]):
     st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
 
-# Barras de Vida, Stamina, Impulso e Força de Vontade
+# Health, Stamina, Impulse, and Willpower Bars
 st.header("Status")
-status_cols = st.columns(4)
-for i, status in enumerate(["vida", "stamina", "impulso", "forca_vontade"]):
-    st.session_state.ficha["status"][status] = status_cols[i].slider(status.capitalize(), 0, 100, st.session_state.ficha["status"][status])
 
-# Barras de progresso coloridas
-st.subheader("Barras de Progresso")
-create_progress_bar(st.session_state.ficha["status"]["vida"], 100, 'red')
-create_progress_bar(st.session_state.ficha["status"]["stamina"], 100, 'green')
-create_progress_bar(st.session_state.ficha["status"]["impulso"], 100, 'blue')
-create_progress_bar(st.session_state.ficha["status"]["forca_vontade"], 100, 'purple')
+# Function to create colored sliders
+def create_colored_slider(label, status_key, color):
+    st.subheader(label)
+    st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
+    st.session_state.ficha["status"][status_key] = st.slider(
+        label,
+        0, 100,
+        st.session_state.ficha["status"][status_key],
+        key=status_key,
+        help=f"Nível de {label.lower()} do personagem",
+        step=1,
+    )
 
-# Inventário
+# Create colored sliders for each status
+create_colored_slider("Vida", "vida", "#FF5733")  # Red
+create_colored_slider("Stamina", "stamina", "#33FF5E")  # Green
+create_colored_slider("Impulso", "impulso", "#337CFF")  # Blue
+create_colored_slider("Força de Vontade", "forca_vontade", "#A933FF")  # Purple
+
+# Inventory
 st.header("Inventário")
 st.session_state.ficha["inventario"] = st.text_area("Inventário", st.session_state.ficha["inventario"])
 
-# Habilidades
+# Abilities
 st.header("Habilidades")
 
 if "new_habilidades" not in st.session_state:
@@ -131,10 +139,10 @@ def adicionar_habilidade():
             })
             st.success("Habilidade adicionada com sucesso!")
 
-# Botão para adicionar habilidade
+# Button to add ability
 adicionar_habilidade()
 
-# Mostrar habilidades adicionadas
+# Show added abilities
 if st.session_state.ficha["habilidades"]:
     st.subheader("Lista de Habilidades")
     for idx, habilidade in enumerate(st.session_state.ficha["habilidades"]):
@@ -142,11 +150,11 @@ if st.session_state.ficha["habilidades"]:
             st.write(f"*Descrição:* {habilidade['descricao']}")
             st.write(f"*Custo:* {habilidade['custo']}")
 
-# Botão para salvar a ficha em um arquivo JSON
+# Button to save the character sheet to a JSON file
 if st.button("Salvar Ficha"):
     save_data(st.session_state.ficha)
 
-# Botão para baixar a ficha em um arquivo JSON
+# Button to download the character sheet as a JSON file
 ficha_json = json.dumps(st.session_state.ficha)
 st.download_button(
     label="Baixar Ficha",
