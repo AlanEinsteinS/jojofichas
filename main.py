@@ -87,7 +87,7 @@ st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session
 
 # Attributes with rank from E to A
 st.header("Atributos")
-rank_choices = ["E", "D", "C", "B", "A"]
+rank_choices = ["E", "D", "C", "B", "A", "S", "S+", "X"]
 cols = st.columns(5)
 for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencia"]):
     st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
@@ -101,7 +101,7 @@ def create_colored_slider(label, status_key, color):
     st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
     st.session_state.ficha["status"][status_key] = st.slider(
         label,
-        0, 100,
+        0, 500,
         st.session_state.ficha["status"][status_key],
         key=status_key,
         help=f"Nível de {label.lower()} do personagem",
