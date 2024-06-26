@@ -1,9 +1,6 @@
 import streamlit as st
-import plotly.graph_objects as go
+import plotly.graph_objects as go  # Corrigir a importação do Plotly
 import json
-
-# Cabeçalho com link para GitHub
-
 
 def create_progress_bar(value, max_value, color):
     fig = go.Figure(go.Indicator(
