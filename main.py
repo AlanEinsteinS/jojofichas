@@ -1,157 +1,159 @@
 import streamlit as st
-import pickle
-import os
+import plotly.graph_objects as go
+import json
 
-# Função para salvar os dados inseridos localmente
-def salvar_dados_localmente(nome_usuario, dados):
+# Cabeçalho com link para GitHub
+
+
+def create_progress_bar(value, max_value, color):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        gauge={'axis': {'range': [0, max_value]},
+               'bar': {'color': color}},
+    ))
+    fig.update_layout(height=150, margin={'t': 0, 'b': 0, 'l': 0, 'r': 0})
+    st.plotly_chart(fig, use_container_width=True)
+
+def save_data(data, filename="rpg_data.json"):
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+    st.success(f"Ficha salva com sucesso em {filename}!")
+
+def load_data(filename="rpg_data.json"):
     try:
-        # Obter o caminho da área de trabalho do usuário
-        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        st.warning("Nenhum arquivo de dados encontrado.")
+        return None
 
-        # Criar diretório se não existir
-        save_dir = os.path.join(desktop_path, 'saves')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        
-        # Salvar dados em um arquivo com nome do usuário
-        file_path = os.path.join(save_dir, f'{nome_usuario}_dados_salvos.pkl')
-        with open(file_path, 'wb') as f:
-            pickle.dump(dados, f)
-        st.success('Dados salvos localmente com sucesso!')
-    except Exception as e:
-        st.error(f'Erro ao salvar dados: {e}')
-
-# Função para carregar todos os saves de um usuário
-def carregar_saves_usuario(nome_usuario):
-    try:
-        saves = []
-        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
-        save_dir = os.path.join(desktop_path, 'saves')
-        
-        save_files = [f for f in os.listdir(save_dir) if f.startswith(f'{nome_usuario}_')]
-        
-        for file in save_files:
-            file_path = os.path.join(save_dir, file)
-            with open(file_path, 'rb') as f:
-                dados = pickle.load(f)
-                saves.append(dados)
-        
-        return saves
-    except Exception as e:
-        st.error(f'Erro ao carregar saves do usuário: {e}')
-        return []
-
-# Estilo customizado
+# Aplicar estilos CSS para um tema escuro
 st.markdown(
     """
     <style>
     body {
-        color: #FFFFFF; /* Cor do texto */
-        background-color: #000000; /* Cor de fundo */
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte */
+        color: #d4d4d4;
+        background-color: #1e1e1e;
     }
-    .main-title {
-        font-size: 36px;
-        font-weight: bold;
-        text-align: center;
-        color: #FFFFFF; /* Cor do título principal */
-        margin-bottom: 30px;
+    .st-bw {
+        color: #d4d4d4;
     }
-    .section-header {
-        font-size: 24px;
-        font-weight: bold;
-        color: #FFFFFF; /* Cor do título de seção */
-        margin-top: 20px;
-        border-bottom: 2px solid #FFFFFF; /* Linha de separação */
-        padding-bottom: 10px;
+    .st-cc {
+        color: #d4d4d4 !important;
     }
-    .data-entry {
-        font-size: 16px;
-        margin-bottom: 10px;
+    .st-bv {
+        background: #1e1e1e;
     }
-    .data-entry strong {
-        color: #FFFFFF; /* Cor do texto em negrito */
+    .st-ez {
+        background-color: #252525;
     }
     </style>
-    """, unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True
 )
 
-# Cabeçalho com link para GitHub
-st.markdown('<p class="main-title">JoJo Fichas</p>', unsafe_allow_html=True)
+# Título do site
+st.title('JoJo Fichas')
 st.markdown('<p style="text-align: center;"><a href="https://github.com/AlanEinsteinS" target="_blank" style="color: #FFFFFF; text-decoration: none;">Made by dark</a></p>', unsafe_allow_html=True)
+# Carregar dados se o arquivo for enviado
 
-# Dados do usuário
-st.markdown('<p class="section-header">Dados do Usuário</p>', unsafe_allow_html=True)
-nome_usuario = st.text_input('Nome do Usuário', key='nome_usuario')
+uploaded_file = st.file_uploader("Carregar Ficha", type=["json"])
+if uploaded_file:
+    st.session_state.ficha = json.load(uploaded_file)
 
-# Dados do Stand
-st.markdown('<p class="section-header">Dados do Stand</p>', unsafe_allow_html=True)
-nome_stand = st.text_input('Nome do Stand', key='nome_stand')
-impulso = st.text_input('Impulso', key='impulso')
-forca_contato = st.text_input('Força de Contato', key='forca_contato')
-stamina = st.text_input('Stamina', key='stamina')
-habilidades = st.text_area('Habilidades', height=200, key='habilidades')
-fraquezas = st.text_area('Fraquezas', height=200, key='fraquezas')
-aparencia_stand = st.text_area('Aparência do Stand / Forma', height=200, key='aparencia_stand')
-condicao_ferimento = st.text_input('Condição do Ferimento', key='condicao_ferimento')
-condicoes = st.text_area('Condições', height=200, key='condicoes')
-tecnicas = st.text_area('Técnicas', height=200, key='tecnicas')
-anotacoes_stand = st.text_area('Anotações do Stand / Ações', height=200, key='anotacoes_stand')
-
-# Traits do Stand
-st.markdown('<p class="section-header">Traits do Stand</p>', unsafe_allow_html=True)
-poder = st.selectbox('Poder', ['A', 'B', 'C', 'D', 'E'], key='poder')
-velocidade = st.selectbox('Velocidade', ['A', 'B', 'C', 'D', 'E'], key='velocidade')
-alcance = st.selectbox('Alcance', ['A', 'B', 'C', 'D', 'E'], key='alcance')
-durabilidade = st.selectbox('Durabilidade', ['A', 'B', 'C', 'D', 'E'], key='durabilidade')
-precisao = st.selectbox('Precisão', ['A', 'B', 'C', 'D', 'E'], key='precisao')
-potencial = st.selectbox('Potencial', ['A', 'B', 'C', 'D', 'E'], key='potencial')
-
-# Botão para salvar os dados
-if st.button('Salvar Dados'):
-    dados = {
-        "nome_usuario": nome_usuario,
-        "nome_stand": nome_stand,
-        "impulso": impulso,
-        "forca_contato": forca_contato,
-        "stamina": stamina,
-        "habilidades": habilidades,
-        "fraquezas": fraquezas,
-        "aparencia_stand": aparencia_stand,
-        "condicao_ferimento": condicao_ferimento,
-        "condicoes": condicoes,
-        "tecnicas": tecnicas,
-        "anotacoes_stand": anotacoes_stand,
-        "poder": poder,
-        "velocidade": velocidade,
-        "alcance": alcance,
-        "durabilidade": durabilidade,
-        "precisao": precisao,
-        "potencial": potencial
+# Inicializar dados se não estiverem no estado da sessão
+if "ficha" not in st.session_state:
+    st.session_state.ficha = {
+        "nome_usuario": "",
+        "nome_stand": "",
+        "atributos": {
+            "forca": "E",
+            "velocidade": "E",
+            "precisao": "E",
+            "durabilidade": "E",
+            "potencia": "E"
+        },
+        "status": {
+            "vida": 50,
+            "stamina": 50,
+            "impulso": 50,
+            "forca_vontade": 50
+        },
+        "inventario": "",
+        "habilidades": []
     }
-    salvar_dados_localmente(nome_usuario, dados)
 
-# Botão para carregar todos os saves do usuário
-if st.button('Ver Todos os Saves'):
-    saves_usuario = carregar_saves_usuario(nome_usuario)
-    if saves_usuario:
-        st.markdown('<p class="section-header">Todos os Saves</p>', unsafe_allow_html=True)
-        for idx, save in enumerate(saves_usuario):
-            st.markdown(f'<p class="data-entry"><strong>Save {idx + 1}</strong></p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Nome do Stand:</strong> {save["nome_stand"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Impulso:</strong> {save["impulso"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Força de Contato:</strong> {save["forca_contato"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Stamina:</strong> {save["stamina"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Habilidades:</strong></p><p>{save["habilidades"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Fraquezas:</strong></p><p>{save["fraquezas"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Aparência do Stand / Forma:</strong></p><p>{save["aparencia_stand"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Condição do Ferimento:</strong> {save["condicao_ferimento"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Condições:</strong></p><p>{save["condicoes"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Técnicas:</strong></p><p>{save["tecnicas"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Anotações do Stand / Ações:</strong></p><p>{save["anotacoes_stand"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Poder:</strong> {save["poder"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Velocidade:</strong> {save["velocidade"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Alcance:</strong> {save["alcance"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Durabilidade:</strong> {save["durabilidade"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Precisão:</strong> {save["precisao"]}</p>', unsafe_allow_html=True)
-            st.markdown(f'<p class="data-entry"><strong>Velocidade:</strong> {save["velocidade"]}</p>', unsafe_allow_html=True)
+# Informações do Usuário
+st.header("Informações do Usuário")
+st.session_state.ficha["nome_usuario"] = st.text_input("Nome do usuário", st.session_state.ficha["nome_usuario"])
+st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session_state.ficha["nome_stand"])
+
+# Atributos com rank de E a A
+st.header("Atributos")
+rank_choices = ["E", "D", "C", "B", "A"]
+cols = st.columns(5)
+for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencia"]):
+    st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
+
+# Barras de Vida, Stamina, Impulso e Força de Vontade
+st.header("Status")
+status_cols = st.columns(4)
+for i, status in enumerate(["vida", "stamina", "impulso", "forca_vontade"]):
+    st.session_state.ficha["status"][status] = status_cols[i].slider(status.capitalize(), 0, 100, st.session_state.ficha["status"][status])
+
+# Barras de progresso coloridas
+st.subheader("Barras de Progresso")
+create_progress_bar(st.session_state.ficha["status"]["vida"], 100, 'red')
+create_progress_bar(st.session_state.ficha["status"]["stamina"], 100, 'green')
+create_progress_bar(st.session_state.ficha["status"]["impulso"], 100, 'blue')
+create_progress_bar(st.session_state.ficha["status"]["forca_vontade"], 100, 'purple')
+
+# Inventário
+st.header("Inventário")
+st.session_state.ficha["inventario"] = st.text_area("Inventário", st.session_state.ficha["inventario"])
+
+# Habilidades
+st.header("Habilidades")
+
+if "new_habilidades" not in st.session_state:
+    st.session_state.new_habilidades = []
+
+def adicionar_habilidade():
+    with st.form(key='habilidade_form', clear_on_submit=True):
+        nome_habilidade = st.text_input("Nome da Habilidade")
+        descricao_habilidade = st.text_area("Descrição")
+        custo_habilidade = st.number_input("Custo", min_value=0)
+        submit_button = st.form_submit_button(label='Adicionar Habilidade')
+
+        if submit_button and nome_habilidade and descricao_habilidade:
+            st.session_state.ficha["habilidades"].append({
+                "nome": nome_habilidade,
+                "descricao": descricao_habilidade,
+                "custo": custo_habilidade
+            })
+            st.success("Habilidade adicionada com sucesso!")
+
+# Botão para adicionar habilidade
+adicionar_habilidade()
+
+# Mostrar habilidades adicionadas
+if st.session_state.ficha["habilidades"]:
+    st.subheader("Lista de Habilidades")
+    for idx, habilidade in enumerate(st.session_state.ficha["habilidades"]):
+        with st.expander(f"Habilidade {idx+1}: {habilidade['nome']}"):
+            st.write(f"*Descrição:* {habilidade['descricao']}")
+            st.write(f"*Custo:* {habilidade['custo']}")
+
+# Botão para salvar a ficha em um arquivo JSON
+if st.button("Salvar Ficha"):
+    save_data(st.session_state.ficha)
+
+# Botão para baixar a ficha em um arquivo JSON
+ficha_json = json.dumps(st.session_state.ficha)
+st.download_button(
+    label="Baixar Ficha",
+    data=ficha_json,
+    file_name="ficha_rpg.json",
+    mime="application/json"
+)
