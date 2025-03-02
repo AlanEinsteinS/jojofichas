@@ -1,186 +1,329 @@
 import streamlit as st
 import json
+import base64
+from datetime import datetime
 
-# Função para salvar dados em um arquivo JSON
-def save_data(data, filename="rpg_data.json"):
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
-    st.success(f"Ficha salva com sucesso em {filename}!")
+class RPGCharacterSheet:
+    def __init__(self):
+        # Initialize the character sheet with more comprehensive default values
+        self.default_ficha = {
+            "info": {
+                "nome_usuario": "",
+                "nome_stand": "",
+                "data_criacao": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "ultima_edicao": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            },
+            "atributos": {
+                "forca": "E",
+                "velocidade": "E", 
+                "precisao": "E",
+                "durabilidade": "E",
+                "potencial": "E",
+                "alcance": "E"
+            },
+            "status": {
+                "vida": {"atual": 50, "max": 500},
+                "stamina": {"atual": 50, "max": 500},
+                "impulso": {"atual": 50, "max": 500},
+                "forca_vontade": {"atual": 50, "max": 500}
+            },
+            "inventario": [],
+            "habilidades": [],
+            "historia": "",
+            "notas_extras": ""
+        }
 
-# Função para carregar dados de um arquivo JSON
-def load_data(filename="rpg_data.json"):
-    try:
-        with open(filename, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        st.warning("Nenhum arquivo de dados encontrado.")
-        return None
+    def aplicar_estilo_personalizado(self):
+        """Aplicar estilo personalizado para o aplicativo"""
+        st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        .main .block-container {
+            background-color: #1e1e1e;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stTabs [data-baseweb="tab-list"] {
+            background-color: #252525;
+            border-radius: 10px;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            color: #a0a0a0;
+            transition: all 0.3s ease;
+        }
+        
+        .stTabs [data-baseweb="tab"]:hover {
+            color: #ffffff;
+            background-color: #353535;
+        }
+        
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            color: #00ffff;
+            background-color: #353535;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00ffff;
+        }
+        
+        .stButton>button {
+            background-color: #00ffff;
+            color: #121212;
+            font-weight: bold;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .stButton>button:hover {
+            background-color: #00cccc;
+            transform: scale(1.05);
+        }
+        
+        .stTextInput>div>div>input, 
+        .stTextArea>div>div>textarea, 
+        .stSelectbox>div>div>select {
+            background-color: #252525 !important;
+            color: #e0e0e0 !important;
+            border: 1px solid #353535 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-# Aplicando a fonte Montserrat para todo o app
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+    def save_data(self, data, filename="rpg_data.json"):
+        """Salvar dados em um arquivo JSON"""
+        data["info"]["ultima_edicao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        st.success(f"Ficha salva com sucesso em {filename}!")
 
-    body {
-        font-family: 'Montserrat', sans-serif;
-        color: #d4d4d4;
-        background-color: #1e1e1e;
-    }
-    .st-bw {
-        color: #d4d4d4;
-    }
-    .st-cc {
-        color: #d4d4d4 !important;
-    }
-    .st-bv {
-        background: #1e1e1e;
-    }
-    .st-ez {
-        background-color: #252525;
-    }
+    def load_data(self, filename="rpg_data.json"):
+        """Carregar dados de um arquivo JSON"""
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            st.warning("Nenhum arquivo de dados encontrado.")
+            return None
 
-    /* Increase font size for sliders */
-    .stSlider .streamlit-slider .slider-value span {
-        font-size: 18px !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+    def criar_interface_ficha(self):
+        """Criar interface completa para a ficha de personagem"""
+        # Inicializar ficha se não existir
+        if "ficha" not in st.session_state:
+            st.session_state.ficha = self.default_ficha.copy()
 
-# Título do aplicativo
-st.title('JoJo Fichas')
-st.markdown('<p style="text-align: center;"><a href="https://github.com/AlanEinsteinS" target="_blank" style="color: #FFFFFF; text-decoration: none;">Made by dark</a></p>', unsafe_allow_html=True)
+        # Tabs para organizar a ficha
+        tab1, tab2, tab3, tab4 = st.tabs(["Informações", "Atributos", "Status", "Habilidades"])
 
-# Carregar dados se um arquivo JSON for enviado
-uploaded_file = st.file_uploader("Carregar Ficha", type=["json"])
-if uploaded_file:
-    st.session_state.ficha = json.load(uploaded_file)
+        with tab1:
+            self._criar_aba_informacoes()
 
-# Inicializar dados se não estiverem no estado da sessão
-if "ficha" not in st.session_state:
-    st.session_state.ficha = {
-        "nome_usuario": "",
-        "nome_stand": "",
-        "atributos": {
-            "forca": "E",
-            "velocidade": "E",
-            "precisao": "E",
-            "durabilidade": "E",
-            "potencial": "E",
-            "alcance": "E"
-        },
-        "status": {
-            "vida": 50,
-            "stamina": 50,
-            "impulso": 50,
-            "forca_vontade": 50
-        },
-        "inventario": "",
-        "habilidades": []
-    }
+        with tab2:
+            self._criar_aba_atributos()
 
-# Informações do usuário
-st.header("Informações do Usuário")
-st.session_state.ficha["nome_usuario"] = st.text_input("Nome do usuário", st.session_state.ficha["nome_usuario"])
-st.session_state.ficha["nome_stand"] = st.text_input("Nome do stand", st.session_state.ficha["nome_stand"])
+        with tab3:
+            self._criar_aba_status()
 
-# Atributos com classificação de E a A
-st.header("Atributos")
-rank_choices = ["E", "D", "C", "B", "A", "S", "S+", "X"]
-cols = st.columns(6)
-for i, atributo in enumerate(["forca", "velocidade", "precisao", "durabilidade", "potencial", "alcance"]):
-    st.session_state.ficha["atributos"][atributo] = cols[i].selectbox(atributo.capitalize(), rank_choices, index=rank_choices.index(st.session_state.ficha["atributos"][atributo]))
+        with tab4:
+            self._criar_aba_habilidades()
 
-# Barras de Vida, Stamina, Impulso e Força de Vontade
-st.header("Status")
+        # Botões de ação na parte inferior
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Salvar Ficha", key="salvar_ficha"):
+                self.save_data(st.session_state.ficha)
 
-# Função para criar sliders coloridos
-def create_colored_slider(label, status_key, color, default_max=500):
-    st.subheader(label)
-    st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
-    max_value = st.session_state.ficha["status"].get(f"{status_key}_max", default_max)
-    max_value = st.number_input(f'Máximo para {label.lower()}', min_value=1, value=max_value)
-    st.session_state.ficha["status"][status_key] = st.slider(
-        label,
-        0, max_value,
-        st.session_state.ficha["status"][status_key],
-        key=status_key,
-        help=f"Nível de {label.lower()} do personagem",
-        step=1,
+        with col2:
+            ficha_json = json.dumps(st.session_state.ficha, indent=4, ensure_ascii=False)
+            st.download_button(
+                label="Baixar Ficha",
+                data=ficha_json,
+                file_name=f"ficha_rpg_{st.session_state.ficha['info']['nome_stand']}.json",
+                mime="application/json"
+            )
+
+        with col3:
+            uploaded_file = st.file_uploader("Carregar Ficha", type=["json"])
+            if uploaded_file:
+                try:
+                    st.session_state.ficha = json.load(uploaded_file)
+                    st.success("Ficha carregada com sucesso!")
+                except Exception as e:
+                    st.error(f"Erro ao carregar ficha: {e}")
+
+    def _criar_aba_informacoes(self):
+        """Criar aba de informações pessoais"""
+        st.header("Informações do Stand")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.session_state.ficha["info"]["nome_usuario"] = st.text_input(
+                "Nome do Usuário", 
+                st.session_state.ficha["info"]["nome_usuario"]
+            )
+        with col2:
+            st.session_state.ficha["info"]["nome_stand"] = st.text_input(
+                "Nome do Stand", 
+                st.session_state.ficha["info"]["nome_stand"]
+            )
+
+        st.text_area(
+            "História do Stand", 
+            st.session_state.ficha["historia"], 
+            key="historia_stand",
+            on_change=lambda: st.session_state.ficha.update({"historia": st.session_state.historia_stand})
+        )
+
+        st.text_area(
+            "Notas Extras", 
+            st.session_state.ficha["notas_extras"], 
+            key="notas_extras_stand",
+            on_change=lambda: st.session_state.ficha.update({"notas_extras": st.session_state.notas_extras_stand})
+        )
+
+        # Mostrar data de criação e última edição
+        st.markdown(f"""
+        **Criado em:** {st.session_state.ficha['info'].get('data_criacao', 'N/A')}
+        **Última Edição:** {st.session_state.ficha['info'].get('ultima_edicao', 'N/A')}
+        """)
+
+    def _criar_aba_atributos(self):
+        """Criar aba de atributos do Stand"""
+        st.header("Atributos do Stand")
+        
+        rank_choices = ["E", "D", "C", "B", "A", "S", "S+", "X"]
+        
+        cols = st.columns(3)
+        atributos = ["forca", "velocidade", "precisao"]
+        
+        for i, atributo in enumerate(atributos):
+            with cols[i]:
+                st.session_state.ficha["atributos"][atributo] = st.selectbox(
+                    atributo.capitalize(), 
+                    rank_choices, 
+                    index=rank_choices.index(st.session_state.ficha["atributos"][atributo])
+                )
+        
+        cols = st.columns(3)
+        atributos = ["durabilidade", "potencial", "alcance"]
+        
+        for i, atributo in enumerate(atributos):
+            with cols[i]:
+                st.session_state.ficha["atributos"][atributo] = st.selectbox(
+                    atributo.capitalize(), 
+                    rank_choices, 
+                    index=rank_choices.index(st.session_state.ficha["atributos"][atributo])
+                )
+
+    def _criar_aba_status(self):
+        """Criar aba de status do personagem"""
+        st.header("Status do Personagem")
+        
+        status_colors = {
+            "vida": "#FF5733",
+            "stamina": "#33FF5E", 
+            "impulso": "#337CFF", 
+            "forca_vontade": "#A933FF"
+        }
+        
+        for status_key, color in status_colors.items():
+            st.subheader(status_key.replace("_", " ").title())
+            
+            # Configurar estilo do slider
+            st.markdown(f'<style>.st-eb {{color: {color} !important}}</style>', unsafe_allow_html=True)
+            
+            # Slider para status atual
+            st.session_state.ficha["status"][status_key]["atual"] = st.slider(
+                f"Valor Atual de {status_key.replace('_', ' ').title()}",
+                0, 
+                st.session_state.ficha["status"][status_key]["max"], 
+                st.session_state.ficha["status"][status_key]["atual"],
+                key=f"{status_key}_atual"
+            )
+            
+            # Input para valor máximo
+            st.session_state.ficha["status"][status_key]["max"] = st.number_input(
+                f"Valor Máximo para {status_key.replace('_', ' ').title()}",
+                min_value=1, 
+                value=st.session_state.ficha["status"][status_key]["max"],
+                key=f"{status_key}_max"
+            )
+
+    def _criar_aba_habilidades(self):
+        """Criar aba de gerenciamento de habilidades"""
+        st.header("Habilidades do Stand")
+        
+        # Adicionar nova habilidade
+        with st.expander("Adicionar Nova Habilidade"):
+            with st.form(key='nova_habilidade', clear_on_submit=True):
+                nome = st.text_input("Nome da Habilidade")
+                descricao = st.text_area("Descrição")
+                custo = st.number_input("Custo", min_value=0)
+                submit = st.form_submit_button("Adicionar")
+                
+                if submit and nome and descricao:
+                    nova_habilidade = {
+                        "nome": nome,
+                        "descricao": descricao,
+                        "custo": custo
+                    }
+                    st.session_state.ficha["habilidades"].append(nova_habilidade)
+                    st.success("Habilidade adicionada com sucesso!")
+        
+        # Listar e gerenciar habilidades existentes
+        if st.session_state.ficha["habilidades"]:
+            st.subheader("Habilidades Existentes")
+            for idx, habilidade in enumerate(st.session_state.ficha["habilidades"]):
+                with st.expander(f"{habilidade['nome']} (Custo: {habilidade['custo']})"):
+                    # Campos editáveis
+                    nome_edit = st.text_input("Nome", value=habilidade['nome'], key=f"nome_{idx}")
+                    descricao_edit = st.text_area("Descrição", value=habilidade['descricao'], key=f"desc_{idx}")
+                    custo_edit = st.number_input("Custo", value=habilidade['custo'], min_value=0, key=f"custo_{idx}")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Salvar Alterações", key=f"salvar_{idx}"):
+                            habilidade['nome'] = nome_edit
+                            habilidade['descricao'] = descricao_edit
+                            habilidade['custo'] = custo_edit
+                            st.success("Habilidade atualizada!")
+                    
+                    with col2:
+                        if st.button("Excluir Habilidade", key=f"excluir_{idx}"):
+                            st.session_state.ficha["habilidades"].pop(idx)
+                            st.success("Habilidade removida!")
+                            st.experimental_rerun()
+
+def main():
+    # Configurações iniciais do Streamlit
+    st.set_page_config(
+        page_title="JoJo RPG Character Sheet", 
+        page_icon=":star:", 
+        layout="wide"
     )
-    st.session_state.ficha["status"][f"{status_key}_max"] = max_value  # Salvar o valor máximo no estado da sessão
 
-# Criar sliders coloridos para cada status
-create_colored_slider("Vida", "vida", "#FF5733")
-create_colored_slider("Stamina", "stamina", "#33FF5E")
-create_colored_slider("Impulso", "impulso", "#337CFF")
-create_colored_slider("Força de Vontade", "forca_vontade", "#A933FF")
+    # Criar instância da classe
+    app = RPGCharacterSheet()
 
-# Inventário
-st.header("Inventário")
-st.session_state.ficha["inventario"] = st.text_area("Inventário", st.session_state.ficha["inventario"])
+    # Aplicar estilo personalizado
+    app.aplicar_estilo_personalizado()
 
-# Habilidades
-st.header("Habilidades")
+    # Título do aplicativo
+    st.title('🌟 JoJo RPG - Character Sheet')
+    st.markdown('<p style="text-align: center;">Criado com 💖 por dark</p>', unsafe_allow_html=True)
 
-# Função para adicionar habilidades
-def adicionar_habilidade():
-    with st.form(key='habilidade_form', clear_on_submit=True):
-        nome_habilidade = st.text_input("Nome da Habilidade")
-        descricao_habilidade = st.text_area("Descrição")
-        custo_habilidade = st.number_input("Custo", min_value=0)
-        submit_button = st.form_submit_button(label='Adicionar Habilidade')
+    # Criar interface da ficha
+    app.criar_interface_ficha()
 
-        if submit_button and nome_habilidade and descricao_habilidade:
-            st.session_state.ficha["habilidades"].append({
-                "nome": nome_habilidade,
-                "descricao": descricao_habilidade,
-                "custo": custo_habilidade
-            })
-            st.success("Habilidade adicionada com sucesso!")
-
-# Adicionar habilidade
-adicionar_habilidade()
-
-# Função para excluir habilidades
-def excluir_habilidade(index):
-    st.session_state.ficha["habilidades"].pop(index)
-    st.success("Habilidade excluída com sucesso!")
-
-# Mostrar habilidades adicionadas
-if st.session_state.ficha["habilidades"]:
-    st.subheader("Lista de Habilidades")
-    for idx, habilidade in enumerate(st.session_state.ficha["habilidades"]):
-        with st.expander(f"Habilidade {idx+1}: {habilidade['nome']}"):
-            st.write(f"*Descrição:* {habilidade['descricao']}")
-            st.write(f"*Custo:* {habilidade['custo']}")
-            # Opções para editar ou excluir habilidade
-            edit_habilidade = st.checkbox(f"Editar Habilidade {idx+1}")
-            if edit_habilidade:
-                nome_habilidade_editar = st.text_input("Novo nome da habilidade", value=habilidade['nome'])
-                descricao_habilidade_editar = st.text_area("Nova descrição", value=habilidade['descricao'])
-                custo_habilidade_editar = st.number_input("Novo custo", value=habilidade['custo'])
-                if st.button("Salvar Edição"):
-                    habilidade['nome'] = nome_habilidade_editar
-                    habilidade['descricao'] = descricao_habilidade_editar
-                    habilidade['custo'] = custo_habilidade_editar
-                    st.success("Habilidade editada com sucesso!")
-            delete_habilidade = st.checkbox(f"Excluir Habilidade {idx+1}")
-            if delete_habilidade:
-                if st.button("Confirmar Exclusão"):
-                    excluir_habilidade(idx)  # Chama a função para excluir a habilidade pelo índice atual
-
-# Botão para salvar a ficha de personagem em um arquivo JSON
-if st.button("Salvar Ficha"):
-    save_data(st.session_state.ficha)
-
-# Botão para baixar a ficha de personagem como um arquivo JSON
-ficha_json = json.dumps(st.session_state.ficha, indent=4)
-st.download_button(
-    label="Baixar Ficha",
-    data=ficha_json,
-    file_name="ficha_rpg.json",
-    mime="application/json"
-)
+if __name__ == "__main__":
+    main()
